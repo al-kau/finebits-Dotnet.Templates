@@ -39,7 +39,7 @@ jobs:
     - name: Pack templates
       id: pack
       run: |
-        echo "pack-name=${{ env.output-name }}[v${{ env.version }}]" >> $GITHUB_OUTPUT
+        echo "pack-name=${{ env.output-name }}-v${{ env.version }}" >> $GITHUB_OUTPUT
         dotnet pack "${{ env.template-pack }}" --nologo --output="${{ env.pack-root }}" --p:PackageVersion="${{ env.version }}"
       env:
         version: ${{ steps.version-number.outputs.semantic-version }}

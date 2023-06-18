@@ -6,21 +6,18 @@ on:
     types: [published]
 
 env:
-  pack-root: "${{ github.workspace }}/nupkgs"
-  cert-root: "${{ github.workspace }}/certs"
+  package-root: "${{ github.workspace }}/nupkgs"
+  certificate-root: "${{ github.workspace }}/certificates"
   certificate: ${{ secrets.NUGET_SIGNING_CERT_BASE64 }}
-
+  template-pack-project: "source/templatepack.csproj"
+  artifact-name: Finebits.Dotnet.Templates
 jobs:
 
   pack-templates:
     runs-on: ubuntu-latest
 
     outputs:
-      pack-name: ${{ steps.pack.outputs.pack-name }}
-
-    env:
-      template-pack: "source/templatepack.csproj"
-      output-name: "finebits.dotnet.templates"
+      artifact-full-name: ${{ steps.package.outputs.artifact-full-name }}
 
     steps:
     - name: Checkout
@@ -34,35 +31,41 @@ jobs:
       with:
         dotnet-version: 7.0.x
 
-    - name: New version number
-      id: version-number
-      uses: finebits/github-actions/version-number@main
+    - name: Get version number
+      id: version
+      uses: finebits/github-actions/version-number@v1
+      
+    - name: Save package parameters
+      id: package 
+      run: |
+        echo "package-version=${{ env.package-version }}" >> $GITHUB_OUTPUT
+        echo "artifact-full-name=${{ artifact-name }}-v${{ env.package-version }}" >> $GITHUB_OUTPUT
+      env:
+        package-version: ${{ steps.version.outputs.semantic-hash-version }}
 
     - name: Pack templates
       id: pack
-      run: |
-        echo "pack-name=${{ env.output-name }}-v${{ env.version }}" >> $GITHUB_OUTPUT
-        dotnet pack "${{ env.template-pack }}" --nologo --output="${{ env.pack-root }}" --p:PackageVersion="${{ env.version }}"
+      run: dotnet pack "${{ env.template-pack-project }}" --output="${{ env.package-root }}" --p:PackageVersion="${{ env.version }}"
       env:
-        version: ${{ steps.version-number.outputs.semantic-version }}
+        version: ${{ steps.package.outputs.package-version }}
 
     - name: Pack signing
       if: ${{ env.certificate != '' }}
       run: |
-        mkdir -p ${{ env.cert-root }}
+        mkdir -p ${{ env.certificate-root }}
         echo "${{ env.certificate }}" | base64 --decode > "${{ env.certificate-file }}"
-        dotnet nuget sign "${{ env.pack-root }}/*.nupkg" --certificate-path="${{ env.certificate-file }}" --certificate-password="${{ secrets.NUGET_SIGNING_CERT_PASSWORD }}" --timestamper "http://timestamp.digicert.com"
+        dotnet nuget sign "${{ env.package-root }}/*.nupkg" --certificate-path="${{ env.certificate-file }}" --certificate-password="${{ secrets.NUGET_SIGNING_CERT_PASSWORD }}" --timestamper "http://timestamp.digicert.com"
       env:
-        certificate-file: "${{ env.cert-root }}/cert.pfx"
+        certificate-file: "${{ env.certificate-root }}/certificate.pfx"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ env.pack-name }}
+        name: ${{ env.artifact-full-name }}
         path: |
-          ${{ env.pack-root }}
+          ${{ env.package-root }}
       env: 
-        pack-name: ${{ steps.pack.outputs.pack-name }}
+        artifact-full-name: ${{ steps.package.outputs.artifact-full-name }}
 
   validate-templates:
     runs-on: ubuntu-latest
@@ -85,17 +88,17 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: ${{ env.pack-name }}
-          path: ${{ env.pack-root }}
+          name: ${{ env.artifact-full-name }}
+          path: ${{ env.package-root }}
         env: 
-          pack-name: ${{ needs.pack-templates.outputs.pack-name }}
+          artifact-full-name: ${{ needs.pack-templates.outputs.artifact-full-name }}
 
       - name: Verify package
         if: ${{ env.certificate != '' }}
-        run: dotnet nuget verify "${{ env.pack-root }}/*.nupkg"
+        run: dotnet nuget verify "${{ env.package-root }}/*.nupkg"
 
       - name: Install package
-        run: dotnet new install "${{ env.pack-root }}/*.nupkg"
+        run: dotnet new install "${{ env.package-root }}/*.nupkg"
        
       - name: Create project
         run: dotnet new ${{ env.template-name }} -o "new_project"
@@ -112,10 +115,10 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: ${{ env.pack-name }}
-          path: ${{ env.pack-root }}
+          name: ${{ env.artifact-full-name }}
+          path: ${{ env.package-root }}
         env: 
-          pack-name: ${{ needs.pack-templates.outputs.pack-name }}
+          artifact-full-name: ${{ needs.pack-templates.outputs.artifact-full-name }}
 
       - name: Publish NuGet package
-        run: dotnet nuget push "${{ env.pack-root }}/*.nupkg" --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "${{ env.package-root }}/*.nupkg" --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

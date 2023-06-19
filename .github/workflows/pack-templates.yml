@@ -140,8 +140,8 @@ jobs:
         
       - id: checker
         run: |
-          no_certificate = "${{ steps.check-certificate.outcome == 'success' }}
-          no_apikey = "${{ steps.check-nuget-apikey.outcome == 'success' }}
+          no_certificate = ${{ steps.check-certificate.outcome == 'success' }}
+          no_apikey = ${{ steps.check-nuget-apikey.outcome == 'success' }}
           echo "status=$([[ $no_certificate || $no_apikey ]] && echo no || echo yes" >> $GITHUB_OUTPUT
       
   deploy-templates:

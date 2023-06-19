@@ -124,13 +124,13 @@ jobs:
   can-deploy:
     runs-on: ubuntu-latest
     outputs:
-      check: ${{ steps.check.outputs.check }}
+      check: ${{ steps.deploy-check.outputs.result }}
     steps:
-      - id: 
+      - id: deploy-check
         run: |
           certificate = ${{ env.certificate }}
           apikey = ${{ secrets.NUGET_APIKEY }}
-          echo "check=$([[ $certificate != '' && $apikey != '' ]] && echo true || echo false" >> $GITHUB_OUTPUT
+          echo "result=$([[ $certificate != '' && $apikey != '' ]] && echo true || echo false" >> $GITHUB_OUTPUT
           
   deploy-templates:
     runs-on: ubuntu-latest

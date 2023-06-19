@@ -131,12 +131,12 @@ jobs:
       - id: check-certificate
         if: ${{ env.certificate == '' }}
         run: |
-          echo "Repository secret `NUGET_SIGNING_CERT_BASE64` not found."
+          echo "Repository secret 'NUGET_SIGNING_CERT_BASE64' not found."
         
       - id: check-nuget-apikey
         if: ${{ env.nuget-apikey == '' }}
         run: |
-          echo "Repository secret `NUGET_APIKEY` not found."
+          echo "Repository secret 'NUGET_APIKEY' not found."
         
       - id: checker
         run: |

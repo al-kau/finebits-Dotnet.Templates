@@ -127,7 +127,7 @@ jobs:
       check: ${{ steps.check.outputs.check }}
     steps:
       - id: 
-        run: echo "check=$([[ ${{ env.certificate }} != '' && ${{ secrets.NUGET_APIKEY }} != '' ]] && echo true || echo false" >> $GITHUB_OUTPUT
+        run: echo "check=$([[ ${{ env.certificate != '' }} && ${{ secrets.NUGET_APIKEY != '' }} ]] && echo true || echo false" >> $GITHUB_OUTPUT
           
   deploy-templates:
     runs-on: ubuntu-latest

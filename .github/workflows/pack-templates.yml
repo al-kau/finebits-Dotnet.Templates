@@ -121,19 +121,35 @@ jobs:
       - name: Create project
         run: dotnet new ${{ env.template-name }} -o "new_project"
 
+  can-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.checker.outputs.status }}
+    env:
+      nuget-apikey: ${{ secrets.NUGET_APIKEY }}
+    steps:
+      - id: check-certificate
+        if: ${{ env.certificate != '' }}
+        
+      - id: check-nuget-apikey
+        if: ${{ nuget-apikey != '' }}
+        
+      - id: checker
+        run: |
+          certificate = "${{ steps.check-certificate.outcome == 'success' }}
+          apikey = "${{ steps.check-nuget-apikey.outcome == 'success' }}
+          echo "status=$([[ $certificate && $apikey ]] && echo yes || echo no" >> $GITHUB_OUTPUT
+      
   deploy-templates:
     runs-on: ubuntu-latest
-    needs: [pack-templates, validate-templates ]
+    needs: [pack-templates, validate-templates, can-deploy ]
     env:
       nuget-apikey: ${{ secrets.NUGET_APIKEY }}
 
 # if: ${{ github.event_name == 'release' }}
 
+    if: needs.can-deploy.outputs.status == 'yes'
     steps:
-      - name: Check
-        if: ${{ (env.certificate != '') && (env.nuget-apikey  != '') }}
-        run: exit 1
-        
       - name: Install .NET Core
         uses: actions/setup-dotnet@v3
         with:

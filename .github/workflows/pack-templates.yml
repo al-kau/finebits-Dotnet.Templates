@@ -124,11 +124,13 @@ jobs:
   deploy-templates:
     runs-on: ubuntu-latest
     needs: [pack-templates, validate-templates ]
+    env:
+      nuget-apikey: ${{ secrets.NUGET_APIKEY }}
 
     if: ${{ github.event_name == 'release' }}
     steps:
       - name: Check
-        if: ${{ env.certificate != '' && secrets.NUGET_APIKEY != '' }}
+        if: ${{ (env.certificate != '') && (env.nuget-apikey  != '') }}
         run: exit 1
         
       - name: Install .NET Core

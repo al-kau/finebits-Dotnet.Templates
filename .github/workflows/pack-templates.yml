@@ -128,9 +128,9 @@ jobs:
     steps:
       - id: deploy-check
         run: |
-          certificate = "${{ env.certificate }}"
-          apikey = "${{ secrets.NUGET_APIKEY }}"
-          echo "result=$([[ $certificate != '' && $apikey != '' ]] && echo true || echo false" >> $GITHUB_OUTPUT
+          cert = '${{ env.certificate }}'
+          apikey = '${{ secrets.NUGET_APIKEY }}'
+          echo "result=$([[ $cert != '' && $apikey != '' ]] && echo true || echo false" >> $GITHUB_OUTPUT
           
   deploy-templates:
     runs-on: ubuntu-latest

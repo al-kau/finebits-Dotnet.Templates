@@ -29,7 +29,6 @@ env:
   certificate: ${{ secrets.NUGET_SIGNING_CERT_BASE64 }}
   template-pack-project: "source/templatepack.csproj"
   artifact-name: Finebits.Dotnet.Templates
-  nuget-api-key: ${{ secrets.NUGET_APIKEY }}
 jobs:
 
   pack-templates:
@@ -122,11 +121,19 @@ jobs:
       - name: Create project
         run: dotnet new ${{ env.template-name }} -o "new_project"
 
-  deploy-templates:
-    if: ${{ (github.event_name == 'release') && (env.certificate != '') }}
+  can-deploy:
     runs-on: ubuntu-latest
-    needs: [pack-templates, validate-templates]
+    outputs:
+      check: ${{ steps.check.outputs.check }}
+    steps:
+      - id: 
+        run: echo "check=$([[ ${{ env.certificate }} != '' && ${{ secrets.NUGET_APIKEY }} != '' ]] && echo true || echo false" >> $GITHUB_OUTPUT
+          
+  deploy-templates:
+    runs-on: ubuntu-latest
+    needs: [pack-templates, validate-templates, can-deploy]
 
+    if: ${{ (github.event_name == 'release') && (needs.can-deploy.outputs.check == 'true') }}
     steps:
       - name: Install .NET Core
         uses: actions/setup-dotnet@v3
@@ -141,4 +148,4 @@ jobs:
           artifact-full-name: ${{ needs.pack-templates.outputs.artifact-full-name }}
 
       - name: Publish NuGet package
-        run: dotnet nuget push "${{ env.package-root }}/*.nupkg" --api-key "${{ env.nuget-api-key }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "${{ env.package-root }}/*.nupkg" --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

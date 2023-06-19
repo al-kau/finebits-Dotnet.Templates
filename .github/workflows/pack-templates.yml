@@ -27,8 +27,10 @@ env:
   package-root: "${{ github.workspace }}/nupkgs"
   certificate-root: "${{ github.workspace }}/certificates"
   certificate: ${{ secrets.NUGET_SIGNING_CERT_BASE64 }}
+  certificate-password: ${{ secrets.NUGET_SIGNING_CERT_PASSWORD }}
   template-pack-project: "source/templatepack.csproj"
   artifact-name: Finebits.Dotnet.Templates
+  nuget-apikey: ${{ secrets.NUGET_APIKEY }}
 jobs:
 
   pack-templates:
@@ -68,11 +70,11 @@ jobs:
         version: ${{ steps.package.outputs.package-version }}
 
     - name: Pack signing
-      if: ${{ env.certificate != '' }}
+      if: ${{ env.certificate != '' && env.certificate-password != '' }}
       run: |
         mkdir -p ${{ env.certificate-root }}
         echo "${{ env.certificate }}" | base64 --decode > "${{ env.certificate-file }}"
-        dotnet nuget sign "${{ env.package-root }}/*.nupkg" --certificate-path="${{ env.certificate-file }}" --certificate-password="${{ secrets.NUGET_SIGNING_CERT_PASSWORD }}" --timestamper "http://timestamp.digicert.com"
+        dotnet nuget sign "${{ env.package-root }}/*.nupkg" --certificate-path="${{ env.certificate-file }}" --certificate-password="${{ env.certificate-password }}" --timestamper "http://timestamp.digicert.com"
       env:
         certificate-file: "${{ env.certificate-root }}/certificate.pfx"
 
@@ -125,8 +127,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       status: ${{ steps.checker.outputs.status }}
-    env:
-      nuget-apikey: ${{ secrets.NUGET_APIKEY }}
     steps:
       - id: check-certificate
         if: ${{ env.certificate == '' }}
@@ -134,7 +134,7 @@ jobs:
           echo "Repository secret `NUGET_SIGNING_CERT_BASE64` not found."
         
       - id: check-nuget-apikey
-        if: ${{ nuget-apikey == '' }}
+        if: ${{ env.nuget-apikey == '' }}
         run: |
           echo "Repository secret `NUGET_APIKEY` not found."
         
@@ -147,8 +147,6 @@ jobs:
   deploy-templates:
     runs-on: ubuntu-latest
     needs: [pack-templates, validate-templates, can-deploy ]
-    env:
-      nuget-apikey: ${{ secrets.NUGET_APIKEY }}
 
 # if: ${{ github.event_name == 'release' }}
 

@@ -147,6 +147,6 @@ jobs:
           artifact-full-name: ${{ needs.pack-templates.outputs.artifact-full-name }}
 
       - name: Publish NuGet package
-        run: echo "Here will be: dotnet nuget push"
-
+        run: |
+          echo "Here will be: dotnet nuget push"
 # dotnet nuget push "${{ env.package-root }}/*.nupkg" --api-key "${{ env.nuget-apikey }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

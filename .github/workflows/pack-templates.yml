@@ -148,7 +148,7 @@ jobs:
 
 # if: ${{ github.event_name == 'release' }}
 
-    if: needs.can-deploy.outputs.status == 'yes'
+    if: ${{ needs.can-deploy.outputs.status == 'yes' }}
     steps:
       - name: Install .NET Core
         uses: actions/setup-dotnet@v3

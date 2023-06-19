@@ -127,7 +127,8 @@ jobs:
     env:
       nuget-apikey: ${{ secrets.NUGET_APIKEY }}
 
-    #if: ${{ github.event_name == 'release' }}
+# if: ${{ github.event_name == 'release' }}
+
     steps:
       - name: Check
         if: ${{ (env.certificate != '') && (env.nuget-apikey  != '') }}
@@ -147,4 +148,5 @@ jobs:
 
       - name: Publish NuGet package
         run: echo "Here will be: dotnet nuget push"
-        # dotnet nuget push "${{ env.package-root }}/*.nupkg" --api-key "${{ env.nuget-apikey }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+# dotnet nuget push "${{ env.package-root }}/*.nupkg" --api-key "${{ env.nuget-apikey }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

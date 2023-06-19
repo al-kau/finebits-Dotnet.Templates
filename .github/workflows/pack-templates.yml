@@ -143,6 +143,7 @@ jobs:
           no_certificate=${{ steps.check-certificate.outcome != 'success' }}
           no_apikey=${{ steps.check-nuget-apikey.outcome == 'success' }}
           echo "status=$([[ $no_certificate || $no_apikey ]] && echo no || echo yes)" >> $GITHUB_OUTPUT
+          echo "status:  ${{ steps.checker.outputs.status }}"
       
   deploy-templates:
     runs-on: ubuntu-latest
@@ -150,7 +151,7 @@ jobs:
 
 # if: ${{ github.event_name == 'release' }}
 
-    if: ${{ needs.can-deploy.outputs.status == 'yes' }}
+    if: needs.can-deploy.outputs.status == 'yes'
     steps:
       - name: Install .NET Core
         uses: actions/setup-dotnet@v3

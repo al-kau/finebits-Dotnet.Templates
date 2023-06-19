@@ -129,16 +129,20 @@ jobs:
       nuget-apikey: ${{ secrets.NUGET_APIKEY }}
     steps:
       - id: check-certificate
-        if: ${{ env.certificate != '' }}
+        if: ${{ env.certificate == '' }}
+        run: |
+          echo "Repository secret `NUGET_SIGNING_CERT_BASE64` not found."
         
       - id: check-nuget-apikey
-        if: ${{ nuget-apikey != '' }}
+        if: ${{ nuget-apikey == '' }}
+        run: |
+          echo "Repository secret `NUGET_APIKEY` not found."
         
       - id: checker
         run: |
-          certificate = "${{ steps.check-certificate.outcome == 'success' }}
-          apikey = "${{ steps.check-nuget-apikey.outcome == 'success' }}
-          echo "status=$([[ $certificate && $apikey ]] && echo yes || echo no" >> $GITHUB_OUTPUT
+          no_certificate = "${{ steps.check-certificate.outcome == 'success' }}
+          no_apikey = "${{ steps.check-nuget-apikey.outcome == 'success' }}
+          echo "status=$([[ $no_certificate || $no_apikey ]] && echo no || echo yes" >> $GITHUB_OUTPUT
       
   deploy-templates:
     runs-on: ubuntu-latest
